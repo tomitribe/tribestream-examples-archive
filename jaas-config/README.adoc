@@ -1,0 +1,389 @@
+= JAAS configuration
+
+Tribestream fully supports JAAS in addition to any Tomcat realm. This example demonstrates configuring JAAS to use both
+an LDAP accounts as well as accounts from +tomcat-users.xml+, encrypted with SHA-1.
+
+== Configuring the server
+
+There are two required steps for enabling JAAS with Tribestream. First, check the +conf/server.xml+ file, and ensure
+that the JAAS realm is configured correctly. The configuration should appear as shown below:
+
+[source,xml]
+----
+    <Realm className="org.apache.catalina.realm.LockOutRealm">
+
+
+        <Realm className="org.apache.catalina.realm.JAASRealm"
+                 appName="tribe-realm"
+                 userClassNames="org.apache.openejb.core.security.jaas.UserPrincipal"
+                 roleClassNames="org.apache.openejb.core.security.jaas.GroupPrincipal"/>
+    </Realm>
+----
+
+The next step is to configure the JAAS realm using +conf/jaas.config+. The format of the jaas.config file is documented
+here: http://docs.oracle.com/javase/7/docs/technotes/guides/security/jaas/tutorials/LoginConfigFile.html.
+
+Tribestream includes the following LoginModules out of the box:
+
+|====
+| Class | Description
+| com.tomitribe.security.jaas.TomcatUsersLoginModule
+| Provides authentication against tomcat-users.xml, with the ability to support digest passwords (+digest="SHA"+)
+| com.tomitribe.security.jaas.CipheredLdaptiveLoginModule
+| Provides authentication against an LDAP directory
+|====
+
+This example uses both, and the test runs a pre-configured embedded copy of Apache DS on port 12389 to execute the test
+against.
+
+The jaas.config file to use both modules is as follows:
+
+----
+    tribe-realm {
+      com.tomitribe.security.jaas.CipheredLdaptiveLoginModule OPTIONAL
+        storePass="true"
+        debug="true"
+        ldapUrl="ldap://localhost:12389"
+        userFilter="(uid={user})"
+        baseDN="ou=people,ou=system"
+        useStartTLS="false"
+        subtreeSearch="true"
+        bindDn="uid=admin,ou=system"
+        bindCredential="secret"
+        storePass="true"
+        clearPass="true";
+
+      com.tomitribe.security.jaas.TomcatUsersLoginModule OPTIONAL
+        debug="true"
+        digest="SHA";
+    };
+----
+
+Note that this tries LDAP authentication first, and then falls back to using the +tomcat-users.xml+ file.
+
+We're using the SHA digest, so passwords in +tomcat-users.xml+ need to be digested:
+
+[source,xml,numbered]
+----
+    <tomcat-users>
+        <user username="support" password="5bdcd3c0d4d24ae3e71b3b452a024c6324c7e4bb" />
+    </tomcat-users>
+----
+
+== Application configuration
+
+The +<security-constraint>+, +<login-config>+ and +<security-role>+ elements need to be configured in +web.xml+ to
+enable authentication:
+
+[source,xml,numbered]
+----
+    <web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee"
+             xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+             version="3.0">
+
+
+      <security-constraint>
+        <web-resource-collection>
+          <web-resource-name>REST API Resources</web-resource-name>
+          <url-pattern>/api/*</url-pattern>
+        </web-resource-collection>
+        <auth-constraint>
+          <role-name>*</role-name>
+        </auth-constraint>
+        <user-data-constraint>
+          <transport-guarantee>NONE</transport-guarantee>
+        </user-data-constraint>
+      </security-constraint>
+
+      <login-config>
+        <auth-method>BASIC</auth-method>
+      </login-config>
+      <security-role>
+        <role-name>*</role-name>
+      </security-role>
+
+    </web-app>
+----
+
+== The Test
+
+The test in this example adds basic authentication to the requests. The endpoint we're using echos out the username of
+the logged in user.
+
+Endpoint:
+
+[source,java,numbered]
+----
+    @Path("users")
+    @Singleton
+    @Lock(LockType.READ)
+    public class Users {
+
+        @Resource
+        private SessionContext ctx;
+
+        @GET
+        @Path("whoami")
+        public String whoami() {
+            return ctx.getCallerPrincipal().getName();
+        }
+
+    }
+----
+
+Test:
+
+[source,java,numbered]
+----
+    @Test
+    public void successJBloggs() throws Exception {
+         final String actual = WebClient.create(webapp.toExternalForm(), "jbloggs", "test", null)
+                .path("api/users")
+                .path("whoami")
+                .get(String.class);
+
+        assertEquals("jbloggs", actual);
+    }
+----
+
+== LDAP configuration
+
+=== TomcatUsersLoginModule
+
+This login module provides similar functionality to the UserDatabaseRealm provided by Tomcat itself. It may be desirable to use this functionality via JAAS in order to try multiple datasources - for example, you may wish to try an LDAP database source first, and then fallback to using the Tomcat Users xml file instead in case the user is not present in LDAP.
+
+This LoginModule also provides the ability to store/use the password in a digest format (e.g. SHA1) instead of storing the password in plain text.
+
+Example configuration:
+
++conf/server.xml+:
+
+[source,xml,numbered]
+----
+  <!-- define the the location of tomcat-users.xml -->
+
+  <GlobalNamingResources>
+    <!-- Editable user database that can also be used by
+         UserDatabaseRealm to authenticate users
+    -->
+    <Resource name="UserDatabase" auth="Container"
+              type="org.apache.catalina.UserDatabase"
+              description="User database that can be updated and saved"
+              factory="org.apache.catalina.users.MemoryUserDatabaseFactory"
+              pathname="conf/tomcat-users.xml"/>
+  </GlobalNamingResources>
+
+...
+
+  <!-- Use the LockOutRealm to prevent attempts to guess user passwords
+           via a brute-force attack -->
+      <Realm className="org.apache.catalina.realm.LockOutRealm">
+        <Realm className="org.apache.catalina.realm.JAASRealm"
+               appName="tribe-realm"
+               userClassNames="org.apache.openejb.core.security.jaas.UserPrincipal"
+               roleClassNames="org.apache.openejb.core.security.jaas.GroupPrincipal"/>
+      </Realm>
+----
+
++jaas.config+:
+
+[source,numbered]
+----
+tribe-realm {
+      com.tomitribe.security.jaas.TomcatUsersLoginModule OPTIONAL
+          debug="true"
+          digest="SHA";
+};
+----
+
+Notice that the +tribe-realm+ is configured to use "SHA" as the digest algorithm, and therefore the passwords in conf/tomcat-users.xml should be the SHA1 hash. This can be computed using the openssl binary on *nix systems. For example, to find the SHA1 hash for the string "admin", execute the following command:
+
+----
+$ echo -n "admin" | openssl sha1
+d033e22ae348aeb5660fc2140aec35850c4da997
+----
+
+=== CipheredLdaptiveLoginModule
+
+Wraps the Ldaptive JAAS (http://www.ldaptive.org/docs/guide/jaas) org.ldaptive.jaas.LdapLoginModule module, and adds support for encrypting the password with a cipher. This modules supports all the settings the Ldaptive module provides, and in addition, provides the +passwordCipher+ attribute, which should be set to the fully qualified name of a class that implements +org.apache.openejb.cipher.PasswordCipher+. This class will be used to decrypt the value specified for the bindCredential attribute. This is particularly useful to avoid the need to specify a bind password in cleartext.
+
+This commonly used properties for this modules are as follows:
+
+ldaptive {
+  org.ldaptive.jaas.LdapLoginModule required
+    ldapUrl="ldap://ldaptive.directory.org:389"
+    baseDn="ou=people,dc=ldaptive,dc=org"
+    useStartTLS="true"
+    userFilter="(uid={user})"
+    userRoleAttribute="eduPersonAffiliation";
+};
+
+|====
+| Property | Description
+|ldapUrl
+|The URL of the LDAP server to connect to
+|baseDn
+|The distinguished name of the container to use as the base for searching for users
+|userFilter
+|The LDAP search string to use to find users. Typically this is done by matching on an object class and a username field. The string "{user}" has the username supplied at login time substituted in.
+|userFilterArgs
+|Provides search filter arguments
+|allowMultipleDns
+|Flag indicating whether to allow multiple results to the userFilter. When set to false, an exception will be thrown if there is more than one match.
+|subtreeSearch
+|Flag indicating whether to search the subtree. The default is false, only the base DN will be searched.
+|userRoleAttribute
+|An attribute(s) that exists on the user entry. The value(s) of these attributes will be added as roles for this user. Comma delimited for multiple attributes. By default no attributes are returned as roles. If all attributes should be assigned as role data, set this property to '*'.
+|useFirstPass
+|Whether the login name and password should be retrieved from shared state rather than the callback handler. A login failure with this login name results in a LoginException.
+|tryFirstPass
+|Whether the login name and password should be retrieved from shared state rather than the callback handler. A login failure with this login name results in the callback handler begin invoked for a new login name and password.
+|storePass
+|Whether the login name, login dn, and login password should be stored in shared state after a successful login. Existing values are overwritten.
+|clearPass
+|Whether the login name, login dn, and login password should be removed from shared state after a successful login.
+|setLdapPrincipal
+|Whether the login name should be stored in the LdapPrincipal class. Default value is true.
+|setLdapDnPrincipal
+|Whether the LDAP entry DN should be stored in the LdapDnPrincipal class. Default value is false.
+|setLdapCredential
+|Whether the login password should be stored in the LdapCredential class. Default value is true.
+|defaultRole
+|Role(s) to set if login succeeds on this module. Comma delimited for multiple values. Default value is empty.
+|principalGroupName
+|Name of the Group to place the principal(s) in if login succeeds on this module. Default value is empty.
+|roleGroupName
+|Name of the Group to place the roles in if login succeeds on this module. Default value is empty.
+|====
+
+Full example JAAS configuration for this module using both Apache Directory Services and Active Directory are given in the <<Example Scenarios>> section of this document.
+
+== Example Scenarios
+
+This section of the document will walk through a number of example cases. In all cases, these have been tested using TomEE 1.7.1 / _Tribestream_ 0.50-SNAPSHOT using Apache Directory Services and/or Active Directory (Windows Server 2003).
+
+=== Tomcat users with SHA-1 encrypted passwords
+
+To use the standard Tomcat users .xml file, firstly you need to ensure that the correct resource is defined in server.xml, and then you need to use the com.tomitribe.security.jaas.TomcatUsersLoginModule within your JAAS configuration.
+
+Make sure you have a resource like the one below defined in server.xml:
+
+[source,xml]
+----
+  <GlobalNamingResources>
+    <!-- Editable user database that can also be used by
+         UserDatabaseRealm to authenticate users
+    -->
+    <Resource name="UserDatabase" auth="Container"
+              type="org.apache.catalina.UserDatabase"
+              description="User database that can be updated and saved"
+              factory="org.apache.catalina.users.MemoryUserDatabaseFactory"
+              pathname="conf/tomcat-users.xml"/>
+  </GlobalNamingResources>
+----
+
+And then add the TomcatUserLoginModule to jaas.config:
+
+[source]
+----
+tribe-realm {
+  com.tomitribe.security.jaas.TomcatUsersLoginModule OPTIONAL
+     debug="true"
+     digest="SHA";
+};
+----
+
+This config will use the conf/tomcat-users.xml file and will expect the passwords to be encoded using SHA-1. The openssl command can be used to obtain the SHA-1 for a password: +echo -n "admin" | openssl sha1+.
+
+=== Use both LDAP and Tomcat Users
+
+It maybe desirable to use an LDAP server for authentication, but also to fall back to authenticating against the tomcat-users.xml in the case where the user is not available in the LDAP directory. To do that, configure both the CipheredLdaptiveLoginModule and the TomcatUsersLoginModule for the same application name. Make both optional, and they will be tried in the order specified in the configuration file.
+
+This requires the same UserDatabase resource in server.xml as shown in the example above.
+
+jaas.config:
+
+[source]
+----
+tribe-realm {
+  com.tomitribe.security.jaas.CipheredLdaptiveLoginModule OPTIONAL
+    ldapUrl="ldap://server:389"
+    userFilter="(uid={user})"
+    baseDN="ou=people,o=tomitribe"
+    useStartTLS="false"
+    subtreeSearch="true"
+
+    connectTimeout="5000"
+    debug=false
+    responseTimeout="5000"
+    useStartTLS="false"
+
+    // cache successful authentication until roles are set then clear
+    storePass="true"
+    clearPass="true";
+
+  com.tomitribe.security.jaas.TomcatUsersLoginModule OPTIONAL
+     debug="true"
+     digest="SHA";
+};
+----
+
+=== LDAP authentication against Apache Directory Services
+
+Different LDAP services have different schemas, so a configuration for Apache Directory Services will not work on Active Directory, and will not work with eDirectory. All LDAP services are hierarchical, with each object having some sort of unique name for each object (often the cn - common name - or uid - unique identifier attribute) and a distinguished name, which is the unique name including the full path to the object from the root of the tree.
+
+Typically you will need to specify a bind dn, which is the distinguished name of a user that has read permissions to the tree, and a bind password (which is the password for the bind user). _Tribestream_ will connect as this user to search the tree for the user object that is being authenticated. To search for the user object, a base DN (the distinguished name of the container to search), a user filter (search string) and subtreeSearch (whether only search the specified base DN, or whether to include its child containers as well).
+
+These will vary between different LDAP service and installations. Here's the configuration for Apache Directory Services - note that the bind to search the tree is anonymous (not specified), and that the userFilter is (uid={user}) - i.e. search from the base DN for an object with a uid attribute that matches the username entered.
+
+[source]
+----
+tribe-realm {
+  com.tomitribe.security.jaas.CipheredLdaptiveLoginModule OPTIONAL
+    ldapUrl="ldap://ldap.server.company.org"
+    userFilter="(uid={user})"
+    baseDN="ou=people,o=tomitribe"
+    useStartTLS="false"
+    subtreeSearch="true"
+
+    connectTimeout="5000"
+    debug=false
+    responseTimeout="5000"
+    useStartTLS="false"
+
+    // cache successful authentication until roles are set then clear
+    storePass="true"
+    clearPass="true";
+};
+----
+
+=== LDAP authentication using Active Directory
+
+To use Active Directory as the authentication source, the configuration is similar to the Apache Directory Services configuration, but there are some differences that reflect the difference in schemas.
+
+Here's an example:
+
+[source]
+----
+tribe-realm {
+  com.tomitribe.security.jaas.CipheredLdaptiveLoginModule OPTIONAL
+    ldapUrl="ldap://192.168.0.200"
+    userFilter="(&(sAMAccountName={user})(objectClass=person))"
+    baseDn="dc=hq,dc=mydomain,dc=local"
+    useStartTLS="false"
+    subtreeSearch="true"
+    bindDn="cn=Administrator,cn=Users,dc=hq,dc=mydomain,dc=local"
+    bindCredential="p"
+    passwordCipher="org.apache.openejb.cipher.PlainTextPasswordCipher"
+    connectTimeout="5000"
+    debug=true
+    responseTimeout="5000"
+    useStartTLS="false"
+    storePass="true"
+    clearPass="true";
+};
+----
+
+Notice some key differences here: firstly bindDn and bindCredential are required to search LDAP for the user to authenticate as. Active Directory does not allow an anonymous bind. The bind user should *not* be an administrative user, but one with very restricted read rights to the tree. The userFilter has also changed to sAMAccountName={user} AND objectClass=person. sAMAccountName is the Active Directory LDAP attribute for user name, and the person objectClass identifies users. The other attributes remain the same.
+
+When working with LDAP, a good LDAP browser is recommended, such as Apache Directory Studio (http://directory.apache.org/studio/) or BeaverTail (http://adsi.mvps.org/adsi/CSharp/beavertail.html - Windows only).

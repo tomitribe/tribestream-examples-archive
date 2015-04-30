@@ -1,0 +1,30 @@
+= Tribestream Examples
+ifdef::env-github[:outfilesuffix: .adoc]
+
+This examples project provides a number of simple example projects to demonstrate the new features of Tribestream.
+
+Each sample includes source code (usually REST endpoints), a README and a suite of Arquillian tests that run against a version of Tribestream that the test suite starts up.
+
+Please see the README for each example for more details.
+
+== List of projects
+
+|====
+| Project | Description
+| link:http-signatures-hmac/README{outfilesuffix}[HTTP Signatures HMAC]
+| Some examples to demonstrate signing HTTP messages for authentication and verifying message integrity
+| link:date-header-freshness/README{outfilesuffix}[Date Header Freshness]
+| Demonstrates checking the validity of the date on the HTTP request
+| link:http-signatures-username-retriever/README{outfilesuffix}[HTTP Signatures Username Retriever]
+| Shows how to override the username retrieved from the signature used for authentication
+| link:digest-enforcer/README{outfilesuffix}[Digest enforcer]
+| Demonstrates the Digest and Want-Digest headers for checking requests/responses
+| link:application-limit/README{outfilesuffix}[Application Limit]
+| Applying an application-wide rate and concurrency limit to a resource
+| link:user-limit/README{outfilesuffix}[User Limit]
+| Applying an per-user rate and concurrency limit to a resource
+| link:schedule-limit/README{outfilesuffix}[Schedule Limit]
+| Demonstrates rate and concurrency limiting on a resource invoked by a timer
+| link:jaas-config/README{outfilesuffix}[JAAS Config]
+| Shows how to configure JAAS for LDAP and tomcat-users.xml
+|====

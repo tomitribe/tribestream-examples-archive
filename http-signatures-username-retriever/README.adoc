@@ -1,0 +1,121 @@
+= Username Retriever
+
+If you're new to HTTP Signatures, take a look at the http-signatures-hmac example first.
+
+By default, the username is derived from the key alias used in the signature. However if this is not suitable, you
+can provide your own implementation of +com.tomitribe.tribestream.security.signatures.SignatureUsernameRetriever+ to
+retrieve the username through a different means. In this example, we will provide a hardcoded implementation that always
+returns "user".
+
+== Configuring the application
+
+In the +META-INF/context.xml+ file, we need to ensure that the required implementation of
++com.tomitribe.tribestream.security.signatures.SignatureUsernameRetriever+ is provided.
+
+[source,xml,numbered]
+----
+    <Context PreemptiveAuthentication="true">
+      <Valve className="com.tomitribe.tribestream.security.signatures.SignatureAuthenticator"
+             algorithm="hmac-sha256" debug="true"
+             headers="(request-target)"
+             usernameRetrieverClassname="org.supertribe.signatures.SimpleUserNameRetriever" <!-- 1 -->
+          />
+    </Context>
+----
+
+<1> Adding the class that implements +com.tomitribe.tribestream.security.signatures.SignatureUsernameRetriever+
+
+== Implementing the Username Retriever class
+
+The SignatureUsernameRetriever interface requires a single +getUsername()+ method to be implemented, which is provided
+with a Signature parameter. This method can use any of the signature elements or any other code to determine the username.
+
+In this example, we simply provide a hardcoded username.
+
+----
+    public class SimpleUserNameRetriever implements SignatureUsernameRetriever {
+        @Override
+        public String getUsername(final Signature signature) {
+            return "user";
+        }
+    }
+----
+
+== Adding the header
+
+In Java, creating the signature can be done using the +com.tomitribe.tribestream.security.signatures.Signer+ class:
+
+[source,java,numbered]
+----
+    final Signature signature = new Signature("support", "hmac-sha256", null, "(request-target)");
+
+    final Key key = new SecretKeySpec("<<shared secret>>".getBytes(), "HmacSHA256");
+    final Signer signer = new Signer(key, signature);
+    final Map<String, String> headers = new HashMap<>();
+    final String signature =  signer.sign(method, uri, headers);
+----
+
+The signature can be added to the +Authorization+ header in the test as shown in the complete example below.
+
+[source,java,numbered]
+----
+    @RunWith(Arquillian.class)
+    public class UsersTest {
+
+        /**
+         * Build the web archive to test. This adds in the KeystoreInitializer class from the test sources,
+         * which would otherwise be excluded.
+         * @return The archive to deploy for the test
+         * @throws Exception
+         */
+        @Deployment(testable = false)
+        public static WebArchive war() throws Exception {
+            return new Mvn.Builder()
+                    .name("users.war")
+                    .build(WebArchive.class)
+                    .addClass(KeystoreInitializer.class);
+        }
+
+        /**
+         * Arquillian will boot an instance of Tribestream with a random port. The URL with the random port is injected
+         * into this field.
+         */
+        @ArquillianResource
+        private URL webapp;
+
+        /**
+         * Tests accessing a signatures protected method with a GET request
+         * @throws Exception when test fails or an error occurs
+         */
+        @Test
+        public void success() throws Exception {
+
+             final String actual = WebClient.create(webapp.toExternalForm())
+                    .path("api/users")
+                    .path("whoami")
+                    .header("Authorization", sign("GET", "/users/api/users/whoami"))
+                    .get(String.class);
+
+            assertEquals("user", actual);
+        }
+
+        /**
+         * Create a digital signature using the HTTP method and request URI. This uses the shared secret constant
+         * from the KeystoreInitializer
+         *
+         * @param method HTTP method for the request (e.g. GET, POST, PUT etc)
+         * @param uri The URI of the request, e.g. "/colors/api/colors/preferred"
+         * @return The signature to set on the Authorization header.
+         * @throws Exception
+         */
+        private Signature sign(final String method, final String uri) throws Exception {
+            final Signature signature = new Signature(KeystoreInitializer.KEY_ALIAS, "hmac-sha256", null, "(request-target)");
+
+            final Key key = new SecretKeySpec(KeystoreInitializer.SECRET.getBytes(), KeystoreInitializer.ALGO);
+            final Signer signer = new Signer(key, signature);
+            final Map<String, String> headers = new HashMap<>();
+            return signer.sign(method, uri, headers);
+        }
+    }
+----
+

@@ -1,0 +1,39 @@
+version: 1
+
+dn: ou=people,ou=system
+objectclass: top
+objectclass: organizationalUnit
+ou: people
+description: Contains entries which describe persons
+
+dn: ou=tribestream,ou=groups,ou=system
+objectclass: top
+objectclass: organizationalUnit
+ou: jenkins
+description: Groups for Supertribe
+
+dn: cn=admin,ou=tribestream,ou=groups,ou=system
+objectclass: top
+objectclass: groupOfNames
+cn: admin
+member: cn=Joe Bloggs,ou=people,ou=system
+
+dn: cn=Joe Bloggs,ou=people,ou=system
+objectclass: top
+objectclass: inetOrgPerson
+objectclass: person
+objectclass: organizationalPerson
+cn: Joe Bloggs
+sn: Bloggs
+description: Joe Bloggs
+givenname: Joe Bloggs
+mail: jbloggs@obviouslynotarealemailaddress.com
+uid: jbloggs
+userPassword: {SHA}qUqP5cyxm6YcTAhz05Hph5gvu9M=
+
+# SHA1 for 'test'
+
+
+
+
+

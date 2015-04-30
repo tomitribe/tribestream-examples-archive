@@ -1,0 +1,112 @@
+= Digest Enforcer
+
+Tribestream provides a mechanism to check the integrity of a request against a digest of the payload supplied in a HTTP
+header.
+
+As a simple example, consider a POST endpoint. If the request POSTs the string "Hello" to this endpoint, the server can
+check the "Digest" header to ensure it contains a Digest of the String "Hello". Optionally the server can be configured
+to reject requests that do not provide a digest or a digest that does not match the request payload.
+
+Tribestream supports the following Message Digest algorithms: md5, sha-1, sha-256, sha-384, sha-512, unixsum and unixcksum.
+
+In addition, requests can specify a "Want-Digest" header to specify that one of more digests of the response payload
+must be provided.
+
+== Configuring the server
+
+The following system property should be added to the server (+conf/system.properties+):
+
+----
+    tribe.security.digest.fail-on-invalid-digest=true
+----
+
+This will ensure that any requests with invalid digests are rejected.
+
+== Adding the Digest header
+
+The first step is to compute the digest of the payload you wish to send. To do this, you can use the +MessageDigest+
+class in the JDK. For algorithms other than unixcksum and unixsum, the output from MessageDigest is a byte[] and cannot
+be transported as a HTTP header. The output from these algorithms must be encoded with +Base64+ first. Once the digest
+has been calculated, it can be added to the +Digest+ header. Multiple digests can be added by separating with a comma:
+SHA1=<sha1_digest>,MD5=<md5_digest>.
+
+Here is an example demonstrating adding a SHA1 header to a request.
+
+[source,java,numbered]
+----
+    @Test
+    public void successPost() throws Exception {
+        final String actual = WebClient.create(webapp.toExternalForm())
+                .path("api/colors")
+                .path("preferred")
+                .header("Digest", "SHA=" + digest("SHA1", "Hello"))
+                .post("Hello", String.class);
+
+        assertEquals("Hello", actual);
+    }
+
+    private String digest(final String algorithm, final String payload) throws Exception {
+        return new String(Base64.encodeBase64(MessageDigest.getInstance(algorithm).digest(payload.getBytes())));
+    }
+----
+
+== The Want-Digest header
+
+The +Want-Digest+ header specifies that the server should add a +Digest+ header to the response, and specifies what
+algorithm(s) the digest(s) should use.
+
+The +Want-Digest+ header uses the following format:
+
+----
+    Want-Digest: <algorithm>;q=<priority>,<algorithm>;q=<priorityt>,....
+----
+
+<priority> is a number between 0 and 1.
+
+The server will return the appropriate digests in the +Digest+ header on the response, as shown in this example.
+
+----
+    @Test
+    public void testWantDigest() throws Exception {
+        final Response response = WebClient.create(webapp.toExternalForm())
+                .path("api/colors")
+                .path("preferred")
+                .header("Digest", "SHA=" + digest("SHA1", "Hello"))
+                .header("Want-Digest", "SHA;q=0.2,MD5;q=0.21,Unixsum;q=0.22,Unixcksum;q=0.23")
+                .post("Hello");
+
+        assertEquals("Hello", getResonseBody(response));
+        final MultivaluedMap<String, Object> metadata = response.getMetadata();
+        final List<Object> digestList = metadata.get("digest");
+        for (Object digest : digestList) {
+            final String digestString = digest.toString();
+
+            if (! digestString.contains("=")) {
+                throw new IllegalArgumentException("Invalid digest response header: " + digestString);
+            }
+
+            final String algo = digestString.substring(0, digestString.indexOf("="));
+            final String value = digestString.substring(digestString.indexOf("=") + 1);
+
+            if ("unixcksum".equals(algo)) {
+                final String expected = "2880899316";
+                assertEquals(expected, value);
+            } else if ("unixsum".equals(algo)) {
+                final String expected = "8401";
+                assertEquals(expected, value);
+            } else if ("sha".equals(algo)) {
+                final String expected = new String(Base64.encodeBase64(MessageDigest.getInstance("SHA1").digest("Hello".getBytes())));
+                assertEquals(expected, value);
+            } else if ("md5".equals(algo)) {
+                final String expected = new String(Base64.encodeBase64(MessageDigest.getInstance("MD5").digest("Hello".getBytes())));
+                assertEquals(expected, value);
+            } else {
+                throw new IllegalArgumentException("Unexpected algorithm: " + algo);
+            }
+        }
+    }
+
+    private String digest(final String algorithm, final String payload) throws Exception {
+        return new String(Base64.encodeBase64(MessageDigest.getInstance(algorithm).digest(payload.getBytes())));
+    }
+----

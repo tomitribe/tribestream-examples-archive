@@ -1,0 +1,215 @@
+= Schedule Limit
+
+The application limit annotations can be added to an EJB timer method. The +@ApplicationLimit+ annotation allows you to
+specify a rate and concurrency limit that will be tracked for the method. Applying the rate
+limit is straightforward, adding the `@ApplicationLimit(rate=@Rate(...), concurrent=@Concurrency(...))` annotations.
+
+== Rate limit
+
+The rate limit consists of three parameters - the +limit+, the time +unit+ and the +window+. +Unit+ and +window+ are
+used together to define a period of time that accesses to the rate limited method should be counted for before the
+counter is reset. The +limit+ parameter defines the maximum number of calls that can be make to this method within
+the specified duration.
+
+For example, this method:
+
+[source,java,numbered]
+----
+    @Singleton
+    @Lock(LockType.READ)
+    public class WorkRateLimit {
+
+        /**
+         * Timer service, injected by the EJB container
+         */
+        @Resource
+        private TimerService timerService;
+
+        /**
+         * Thread-safe counter to tracke the number of times the @Timeout method is called
+         */
+        private AtomicInteger timerCount = new AtomicInteger(0);
+
+        /**
+         * Starts the timer. The timer calls the @Timeout method every 500 ms.
+         */
+        public void start() {
+            timerCount.set(0);
+            timerService.createTimer(500, 500, "testtimer");
+        }
+
+        /**
+         * Stops the timer and returns the number of times the @Timeout method was called
+         * @return the number of times the @Timeout method was called
+         */
+        public int stop() {
+            final Collection<Timer> timers = timerService.getTimers();
+            for (Timer timer : timers) {
+                if ("testtimer".equals(timer.getInfo())) {
+                    timer.cancel();
+                }
+            }
+
+            return timerCount.get();
+        }
+
+        /**
+         * Simulatates some work being done. This method can only be called three times per minute.
+         */
+        @Timeout
+        @ApplicationLimit(rate = @Rate(window = 1, unit = GovernanceUnit.MINUTES, limit = 3))
+        public void doWork() {
+            final int count = timerCount.incrementAndGet();
+
+            System.out.println("Work item " + count + " starting");
+            System.out.println("Work item " + count + " complete");
+        }
+    }
+----
+
+can be called up to 3 times within a 1 minute period. Subsequent calls will not be executed. The following test shows
+this in action:
+
+[source,java,numbered]
+----
+    @RunWith(Arquillian.class)
+    public class RateLimitWindowTest {
+
+        /**
+         * Builds the .war file for Arquillian to deploy to Tribestream to test
+         * @return A .war file build in the same way as if a Maven build had been run on the project.
+         * @throws Exception if an error occurs building or deploying the .war archive
+         */
+        @Deployment
+        public static WebArchive war() throws Exception {
+            return new Mvn.Builder()
+                    .name("work.war")
+                    .build(WebArchive.class);
+        }
+
+        @EJB
+        private WorkRateLimit work;
+
+        /**
+         * Calls the @Timeout method 20 times via a timer. The method allows three invocations per minute, so we
+         * check the number of calls that have been successful after 10 seconds.
+         * @throws Exception on error or test failure
+         */
+        @Test
+        public void testRateLimitWindow() throws Exception {
+            work.start();
+            Thread.sleep(10000);
+            final int successfulCalls = work.stop();
+            Assert.assertEquals(3, successfulCalls);
+        }
+
+    }
+----
+
+== Concurrent limit
+
+The concurrent limit specifies the maximum number of simultaneous calls that can be made to a method. The
++@Concurrent+ annotation takes a single parameter - +limit+.
+
+For example:
+
+[source,java,numbered]
+----
+    @Singleton
+    @Lock(LockType.READ)
+    public class WorkConcurrencyLimit {
+
+        /**
+         * Timer service, injected by the EJB container
+         */
+        @Resource
+        private TimerService timerService;
+
+        /**
+         * Thread-safe counter to tracke the number of times the @Timeout method is called
+         */
+        private AtomicInteger timerCount = new AtomicInteger(0);
+
+        /**
+         * Starts the timer. The timer calls the @Timeout method every 500 ms.
+         */
+        public void start() {
+            timerCount.set(0);
+            timerService.createTimer(500, 500, "testtimer");
+        }
+
+        /**
+         * Stops the timer and returns the number of times the @Timeout method was called
+         * @return the number of times the @Timeout method was called
+         */
+        public int stop() {
+            final Collection<Timer> timers = timerService.getTimers();
+            for (Timer timer : timers) {
+                if ("testtimer".equals(timer.getInfo())) {
+                    timer.cancel();
+                }
+            }
+
+            return timerCount.get();
+        }
+
+        /**
+         * Simulatates some work being done. This method can only be called twice at once
+         */
+        @Timeout
+        @AccessTimeout(0)
+        @ApplicationLimit(concurrent = @Concurrent(limit = 2))
+        public void doWork() {
+            final int count = timerCount.incrementAndGet();
+
+            System.out.println("Work item " + count + " starting");
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException e) {
+                // interrupted, not much we can do
+            }
+
+            System.out.println("Work item " + count + " complete");
+        }
+    }
+----
+
+this method can be called two times simultaneously, and any more simultaneous calls will be refused.
+
+This test used the timer to create 20 calls to the @Timeout method. The @Timeout method takes 10 seconds to execute, so
+all these call will overlap. Two calls should succeed and the remainder should fail.
+
+----
+    @RunWith(Arquillian.class)
+    public class ConcurrentLimitWindowTest {
+
+        /**
+         * Builds the .war file for Arquillian to deploy to Tribestream to test
+         * @return A .war file build in the same way as if a Maven build had been run on the project.
+         * @throws Exception if an error occurs building or deploying the .war archive
+         */
+        @Deployment
+        public static WebArchive war() throws Exception {
+            return new Mvn.Builder()
+                    .name("work.war")
+                    .build(WebArchive.class);
+        }
+
+        @EJB
+        private WorkConcurrencyLimit work;
+
+        /**
+         * Calls the @Timeout method 20 times via a timer. The method allows two concurrent calls, so we
+         * check the number of calls that have been successful after 5 seconds, and only two calls should have succeeded.
+         * @throws Exception on error or test failure
+         */
+        @Test
+        public void testConcurrency() throws Exception {
+            work.start();
+            Thread.sleep(10000);
+            final int successfulCalls = work.stop();
+            Assert.assertEquals(2, successfulCalls);
+        }
+
+    }
+----

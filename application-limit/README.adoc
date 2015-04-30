@@ -1,0 +1,246 @@
+= Application Limit
+
+The application limit allows you specify application-wide rate and concurrency limits. Applying the rate limit is
+straightforward, adding the `@ApplicationLimit(rate=@Rate(...), concurrent=@Concurrency(...))` annotations.
+
+The +Colors+ resource has two methods, the +@GET+ method has a rate limit applied, and the +@POST+ has a concurrency
+limit added.
+
+== Rate limit
+
+The rate limit consists of three parameters - the +limit+, the time +unit+ and the +window+. +Unit+ and +window+ are
+used together to define a period of time that accesses to the rate limited method should be counted for before the
+counter is reset. The +limit+ parameter defines the maximum number of calls that can be made to this method within the
+specified duration.
+
+For example, this method:
+
+[source,java,numbered]
+----
+    @GET
+    @Path("preferred")
+    @ApplicationLimit(rate = @Rate(window = 10, unit = GovernanceUnit.SECONDS, limit = 10))
+    public String preferred() {
+        return "orange";
+    }
+----
+
+can be called up to 10 times within a 10 second period. The 11th and subsequent calls will return a 429 (rate exceeded)
+status code. After the 10 second window has passed, the counter is reset and the method can be called again, as shown
+in the test below.
+
+[source,java,numbered]
+----
+    @RunWith(Arquillian.class)
+    public class RateLimitWindowTest {
+
+        private static final int HTTP_OK = 200;
+        private static final int HTTP_LIMIT_EXCEEDED = 429;
+
+        /**
+         * Builds the .war file for Arquillian to deploy to Tribestream to test
+         * @return A .war file build in the same way as if a Maven build had been run on the project.
+         * @throws Exception if an error occurs building or deploying the .war archive
+         */
+        @Deployment(testable = false)
+        public static WebArchive war() throws Exception {
+            return new Mvn.Builder()
+                    .name("colors.war")
+                    .build(WebArchive.class);
+        }
+
+        /**
+         * Arquillian will boot an instance of Tribestream with a random port. The URL with the random port is injected
+         * into this field.
+         */
+        @ArquillianResource
+        private URL webapp;
+
+        /**
+         * Calls the /api/colors/preferred endpoint, and checks the HTTP status code and (optionally) response body match the
+         * expected response code and string.
+         *
+         * @param expectedStatusCode The status code that the endpoint is expected to return. Typically this will be 200 (OK)
+         *                           for calls within the limit, and 429 (limit exceeded) once the limit has been exceeded.
+         * @param expectedBody The expected response body. This can be null. If null is specified, the response body is not
+         *                     checked.
+         * @throws Exception when an error occurs
+         */
+        private void call(final int expectedStatusCode, final String expectedBody) throws Exception {
+            final Response response = WebClient.create(webapp.toExternalForm())
+                    .path("api/colors")
+                    .path("preferred")
+                    .get();
+
+            Assert.assertEquals(expectedStatusCode, response.getStatus());
+
+            if (expectedBody != null) {
+                try (final InputStream is = InputStream.class.cast(response.getEntity())) {
+                    final String body = IO.slurp(is);
+                    Assert.assertEquals(expectedBody, body);
+                }
+            }
+        }
+
+        /**
+         * This test checks the rate limiting on the endpoint by calling the endpoint 10 times sequentially in a loop,
+         * checking the correct response body and status code (200) are returned. The 11th call is over the limit, and should
+         * return a 429 error.
+         *
+         * @throws Exception when an error occurs or the test fails.
+         */
+        @Test
+        public void testRateLimitWindow() throws Exception {
+
+            for (int i = 0; i < 10; i++) {
+                call(HTTP_OK, "orange");
+            }
+
+            // rate limit should now have been exceeded
+            call(HTTP_LIMIT_EXCEEDED, null);
+
+            // sleep for 12 seconds. The window should now have been reset and the resource should be available to consume
+            // again.
+
+            Thread.sleep(12000);
+            call(HTTP_OK, "orange");
+        }
+
+    }
+----
+
+== Concurrent limit
+
+The concurrent limit specifies the maximum number of simultaneous calls that can be made to a method. The +@Concurrent+
+annotation takes a single parameter - +limit+.
+
+For example:
+
+[source,java,numbered]
+----
+    @POST
+    @Path("preferred")
+    @ApplicationLimit(concurrent = @Concurrent(limit = 2))
+    public String preferredPost(final String payload) {
+
+        // simulate a method that takes slightly longer to execute so we can be sure the test calls the method
+        // with 4 threads concurrently
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            // interupted, ignore
+        }
+
+        return payload;
+    }
+----
+
+this method can be called two times at once, any more simultaneous calls will be refused, and will be returned with a
+423 (resource locked) HTTP status code.
+
+This test shows 4 concurrent accesses to the method above, with 2 succeeding, and 2 failing as expected. The resource
+should be available to consume again once the number of concurrent invocations drops below the limit.
+
+----
+    @RunWith(Arquillian.class)
+    public class ConcurrentLimitWindowTest {
+
+        /**
+         * Builds the .war file for Arquillian to deploy to Tribestream to test
+         *
+         * @return A .war file build in the same way as if a Maven build had been run on the project.
+         * @throws Exception if an error occurs building or deploying the .war archive
+         */
+        @Deployment(testable = false)
+        public static WebArchive war() throws Exception {
+            return new Mvn.Builder()
+                    .name("colors.war")
+                    .build(WebArchive.class);
+        }
+
+        /**
+         * Arquillian will boot an instance of Tribestream with a random port. The URL with the random port is injected
+         * into this field.
+         */
+        @ArquillianResource
+        private URL webapp;
+
+        /**
+         * Calls the /api/colors/preferred endpoint, and checks the HTTP status code and (optionally) response body match the
+         * expected response code and string.
+         *
+         * @param payload            The payload to send in the POST to the endpoint
+         * @param expectedStatusCode The status code that the endpoint is expected to return. Typically this will be 200 (OK)
+         *                           for calls within the limit, and 429 (limit exceeded) once the limit has been exceeded.
+         * @param expectedBody       The expected response body. This can be null. If null is specified, the response body is not
+         *                           checked.
+         * @return true if the call succeeds, false otherwise
+         * @throws Exception when an error occurs
+         */
+        private boolean call(final String payload, final int expectedStatusCode, final String expectedBody) throws Exception {
+
+            final Response response = WebClient.create(webapp.toExternalForm())
+                    .path("api/colors")
+                    .path("preferred")
+                    .post(payload);
+
+            if (expectedStatusCode != response.getStatus()) {
+                return false;
+            }
+
+            if (expectedBody != null) {
+                try (final InputStream is = InputStream.class.cast(response.getEntity())) {
+                    final String body = IO.slurp(is);
+                    if (! expectedBody.equals(body)) {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        /**
+         * This test checks the concurrency limit on the endpoint by calling it 4 times simultaneously. 2 calls should
+         * succeed, and 2 calls should fail. Once these calls are complete, the endpoint should be immediately available
+         * again
+         *
+         * @throws Exception when an error occurs or the test fails.
+         */
+        @Test
+        public void testConcurrentLimit() throws Exception {
+
+            final AtomicInteger callsSucceeded = new AtomicInteger(0);
+            final AtomicInteger callsMade = new AtomicInteger(0);
+
+            Runnable runnable = new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        if (call("hello", 200, "hello")) {
+                            callsSucceeded.incrementAndGet();
+                        }
+                    } catch (Exception e) {
+                        // call failed - don't increment the counter
+                    }
+
+                    callsMade.incrementAndGet();
+                }
+            };
+
+            final ExecutorService threadPool = Executors.newFixedThreadPool(4);
+            for (int i = 0; i < 4; i++) {
+                threadPool.submit(runnable);
+            }
+            threadPool.shutdown();
+            threadPool.awaitTermination(10, TimeUnit.SECONDS);
+
+            // two out of the four calls should have succeeded
+            Assert.assertEquals(2, callsSucceeded.intValue());
+            Assert.assertEquals(4, callsMade.intValue());
+
+            // the resource should be available again
+            Assert.assertTrue(call("hello", 200, "hello"));
+        }
+    }
+----

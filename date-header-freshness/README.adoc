@@ -1,0 +1,110 @@
+= Date Header Freshness
+
+If you're new to HTTP Signatures, take a look at the http-signatures-hmac example first.
+
+HTTP signatures can be setup to require that the date header is included in the signing string. However, accepting any
+date could allow the request to be captured and repeated. Therefore it is useful to check that the date is not too
+far into the future or past.
+
+This simple example demonstrates how to sign a simple request to a REST endpoint using the date header, and ensuring the
+validity of the date.
+
+== Configuring the application
+
+In the +META-INF/context.xml+ file, we need to ensure that +date+ is a required header, and that the DateValidationValve
+is included.
+
+[source,xml,numbered]
+----
+    <Context PreemptiveAuthentication="true">
+      <Valve className="com.tomitribe.tribestream.security.date.DateValidationValve"/> <!-- 2 -->
+      <Valve className="com.tomitribe.tribestream.security.signatures.SignatureAuthenticator"
+             algorithm="hmac-sha256" debug="true"
+             headers="(request-target) date" <!-- 1 -->
+          />
+    </Context>
+----
+
+<1> Note the date header has been included here
+<2> Adding the +com.tomitribe.tribestream.security.date.DateValidationValve+ valve checks the validity of the date
+header on the request.
+
+== Adding the header
+
+In Java, creating the signature can be done using the +com.tomitribe.tribestream.security.signatures.Signer+ class:
+
+[source,java,numbered]
+----
+    final Signature signature = new Signature("support", "hmac-sha256", null, "(request-target)", "date");
+
+    final Key key = new SecretKeySpec("<<shared secret>>".getBytes(), "HmacSHA256");
+    final Signer signer = new Signer(key, signature);
+    final Map<String, String> headers = new HashMap<>();
+    headers.put("Date", date);
+    final String signature =  signer.sign(method, uri, headers);
+----
+
+The signature can be added to the +Authorization+ header in the test as shown in the complete example below.
+
+[source,java,numbered]
+----
+    @RunWith(Arquillian.class)
+    public class ColorsTest {
+
+
+
+        @Deployment(testable = false)
+        public static WebArchive war() throws Exception {
+            return new Mvn.Builder()
+                    .name("colors.war")
+                    .build(WebArchive.class)
+                    .addClass(KeystoreInitializer.class);
+        }
+
+        @ArquillianResource
+        private URL webapp;
+
+        private Date today = new Date(); // default window is 1 hour
+        private String stringToday = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US).format(today);
+
+        private Date oneHourAgo = new Date(System.currentTimeMillis() - TimeUnit.HOURS.toMillis(2));
+        private String stringOneHourAgo = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US).format(oneHourAgo);
+
+        @Test
+        public void success() throws Exception {
+
+             final String actual = WebClient.create(webapp.toExternalForm())
+                    .path("api/colors")
+                    .path("preferred")
+                    .header("Authorization", sign("GET", "/colors/api/colors/preferred", stringToday))
+                    .header("Date", stringToday)
+                    .get(String.class);
+
+            assertEquals("orange", actual);
+        }
+
+        @Test
+        public void wrongDate() throws Exception {
+
+            final Response actual = WebClient.create(webapp.toExternalForm())
+                    .path("api/colors")
+                    .path("preferred")
+                    .header("Authorization", sign("GET", "/colors/api/colors/preferred", stringOneHourAgo))
+                    .header("Date", new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US).format(oneHourAgo))
+                    .get();
+
+            assertEquals(412, actual.getStatus());
+        }
+
+        private Signature sign(final String method, final String uri, final String date) throws Exception {
+            final Signature signature = new Signature(KeystoreInitializer.KEY_ALIAS, "hmac-sha256", null, "(request-target)", "date");
+
+            final Key key = new SecretKeySpec(KeystoreInitializer.SECRET.getBytes(), KeystoreInitializer.ALGO);
+            final Signer signer = new Signer(key, signature);
+            final Map<String, String> headers = new HashMap<>();
+            headers.put("Date", date);
+            return signer.sign(method, uri, headers);
+        }
+    }
+----
+
