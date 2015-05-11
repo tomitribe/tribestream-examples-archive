@@ -20,7 +20,7 @@
 
   <groupId>com.tomitribe.tribestream.examples</groupId>
   <artifactId>http-signatures-hmac</artifactId>
-  <version>0.60-SNAPSHOT</version>
+  <version>0.60</version>
   <name>Tribestream Examples :: HTTP Signatures HMAC</name>
 
   <properties>
@@ -108,7 +108,7 @@
     <dependency>
       <groupId>com.tomitribe.tribestream</groupId>
       <artifactId>tribestream</artifactId>
-      <version>${project.version}</version>
+      <version>0.60</version>
       <scope>provided</scope>
       <type>zip</type>
     </dependency>
