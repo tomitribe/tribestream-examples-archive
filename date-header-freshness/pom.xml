@@ -109,7 +109,7 @@
     <dependency>
       <groupId>com.tomitribe.tribestream</groupId>
       <artifactId>tribestream</artifactId>
-      <version>0.57</version>
+      <version>${project.version}</version>
       <scope>provided</scope>
       <type>zip</type>
     </dependency>
