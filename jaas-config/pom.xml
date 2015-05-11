@@ -20,7 +20,7 @@
 
   <groupId>com.tomitribe.tribestream.examples</groupId>
   <artifactId>jaas-config</artifactId>
-  <version>0.60</version>
+  <version>0.61-SNAPSHOT</version>
   <name>Tribestream Examples :: JAAS Config</name>
   <properties>
     <tribestream-security.version>0.56</tribestream-security.version>
@@ -57,7 +57,7 @@
     <dependency>
       <groupId>com.tomitribe.tribestream</groupId>
       <artifactId>tribestream</artifactId>
-      <version>0.60</version>
+      <version>0.61-SNAPSHOT</version>
       <scope>provided</scope>
       <type>zip</type>
     </dependency>
