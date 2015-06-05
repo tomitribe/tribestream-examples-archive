@@ -26,7 +26,7 @@
 
   <groupId>com.tomitribe.tribestream</groupId>
   <artifactId>tribestream-examples</artifactId>
-  <version>0.62-SNAPSHOT</version>
+  <version>0.61</version>
   <packaging>pom</packaging>
   <name>Tribestream Examples</name>
 
@@ -34,7 +34,7 @@
     <connection>scm:git:git@github.com:tomitribe/tribestream-examples.git</connection>
     <url>scm:git:git@github.com:tomitribe/tribestream-examples.git</url>
     <developerConnection>scm:git:git@github.com:tomitribe/tribestream-examples.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>tribestream-examples-0.61</tag>
   </scm>
 
   <modules>
