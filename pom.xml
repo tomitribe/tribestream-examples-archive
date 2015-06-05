@@ -26,7 +26,7 @@
 
   <groupId>com.tomitribe.tribestream</groupId>
   <artifactId>tribestream-examples</artifactId>
-  <version>0.61-SNAPSHOT</version>
+  <version>0.61</version>
   <packaging>pom</packaging>
   <name>Tribestream Examples</name>
 
@@ -39,6 +39,7 @@
 
   <modules>
     <module>date-header-freshness</module>
+    <module>basic-auth</module>
     <module>http-signatures-hmac</module>
     <module>http-signatures-username-retriever</module>
     <module>application-limit</module>

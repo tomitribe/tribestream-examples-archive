@@ -1,0 +1,107 @@
+= BASIC Authentication
+
+As its name suggests, BASIC authentication provides a simple, header-based, plain text mechanism to pass a username
+and password from the client to server to prove the identity of the caller.
+
+This simple example demonstrates how to use BASIC authentication with a REST endpoint and users defined in +tomcat-users.xml+.
+
+== Configuring the server
+
+This example uses the JAAS Realm in server.xml, and the JAAS TomcatUsersLoginModule, but you can use a different login module 
+or realm if you prefer. See the +jaas-config+ example for a LDAP based example.
+
+JAAS Realm Configuration in +server.xml+
+[source,xml,numbered]
+----
+	<Realm className="org.apache.catalina.realm.LockOutRealm">
+
+	        <!-- This is the nested JAAS realm which will load the jaas.config file -->
+	        <Realm className="org.apache.catalina.realm.JAASRealm"
+	               appName="tribe-realm"
+	               userClassNames="org.apache.openejb.core.security.jaas.UserPrincipal"
+	               roleClassNames="org.apache.openejb.core.security.jaas.GroupPrincipal"/>
+	      </Realm>
+----
+
+JAAS configuration to use the TomcatUsersLoginModule in +jaas.config+
+[source]
+----
+	tribe-realm	{
+		com.tomitribe.security.jaas.TomcatUsersLoginModule required;
+	};
+----
+
+Ensure that the username/passwords you wish to use are setup in +tomcat-users.xml+.
+[source,xml,numbered]
+----
+	<tomcat-users>
+	  <role rolename="exploitation"/>
+	  <user username="support" password="password" roles="exploitation"/>
+	</tomcat-users>
+----
+
+== Configuring the application
+
+Finally, the application needs to be configured to use BASIC authentication in +web.xml+, and whether access should be limited to any
+specific roles:
+
+[source,xml,numbered]
+----
+	<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee"
+	         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+	         version="3.0">
+
+
+	  <security-constraint> <!-- 1 -->
+	    <web-resource-collection>
+	      <web-resource-name>REST API Resources</web-resource-name>
+	      <url-pattern>/api/*</url-pattern>
+	    </web-resource-collection>
+	    <auth-constraint>
+	      <role-name>*</role-name> <!-- 2 -->
+	    </auth-constraint>
+	    <user-data-constraint>
+	      <transport-guarantee>NONE</transport-guarantee>
+	    </user-data-constraint>
+	  </security-constraint>
+
+	  <login-config>
+	    <auth-method>BASIC</auth-method>
+	  </login-config>
+	  <security-role>
+	    <role-name>*</role-name> <!-- 3 -->
+	  </security-role>
+
+	</web-app>
+----
+
+<1> Defines a constraint to protect a set of resources
+<2> Provide the roles that are allowing to access the specified resources
+<3> A list of all the roles that apply to the application
+
+== Adding the header
+
+The +Authorization+ header then needs to be added to client calls. The format of the header is:
+
+Authorization: Basic Base64(username:password)
+
+This can be applied in Java as shown below
+
+[source,java,numbered]
+----
+
+    public void callService() {
+        final String actual = WebClient.create(webapp.toExternalForm())
+            .path("api/colors")
+            .path("preferred")
+            .header("Authorization", getAuthorization("support", "password"))
+            .get(String.class);
+	
+		// handle the response
+	}
+
+	private String getAuthorization(final String username, final String password) {
+	    return "Basic " + new String(Base64.encodeBase64((username + ":" + password).getBytes()));
+	}
+----
+

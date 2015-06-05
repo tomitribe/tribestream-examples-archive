@@ -56,6 +56,6 @@ public class KeystoreInitializer {
         final File conf = SystemInstance.get().getBase().getDirectory("conf");
         KS = new File(conf, "test.jks");
         StoreManager.get(KS.getAbsolutePath(), PWD.toCharArray(), true);
-        StoreManager.get(KS.getAbsolutePath(), PWD.toCharArray()).addSecretKey(KEY_ALIAS, PWD.toCharArray(), new SecretKeySpec(SECRET.getBytes(), ALGO));
+        StoreManager.get(KS.getAbsolutePath(), PWD.toCharArray()).addKey(KEY_ALIAS, PWD.toCharArray(), new SecretKeySpec(SECRET.getBytes(), ALGO));
     }
 }

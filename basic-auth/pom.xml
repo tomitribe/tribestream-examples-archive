@@ -19,12 +19,10 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.tomitribe.tribestream.examples</groupId>
-  <artifactId>http-signatures-username-retriever</artifactId>
+  <artifactId>basic-auth</artifactId>
   <version>0.61-SNAPSHOT</version>
-  <name>Tribestream Examples :: HTTP Signatures Username Retriever</name>
-  <properties>
-    <tribestream-security.version>0.61</tribestream-security.version>
-  </properties>
+  <name>Tribestream Examples :: Basic Auth</name>
+
   <packaging>war</packaging>
 
   <dependencies>
@@ -34,12 +32,7 @@
       <version>6.0-6</version>
       <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>com.tomitribe.tribestream</groupId>
-      <artifactId>tribestream-container</artifactId>
-      <version>${tribestream-security.version}</version>
-      <scope>provided</scope>
-    </dependency>
+
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>

@@ -24,8 +24,7 @@
   <name>Tribestream Examples :: Date Header Freshness</name>
 
   <properties>
-    <tribestream-security.version>0.56</tribestream-security.version>
-    <tribestream-documentation.version>1.0.0</tribestream-documentation.version>
+    <tribestream-security.version>0.61</tribestream-security.version>
   </properties>
   <packaging>war</packaging>
 
@@ -39,51 +38,8 @@
 
     <dependency>
       <groupId>com.tomitribe.tribestream</groupId>
-      <artifactId>tribestream-security-api</artifactId>
+      <artifactId>tribestream-container</artifactId>
       <version>${tribestream-security.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.tomitribe.tribestream</groupId>
-      <artifactId>tribestream-security-core</artifactId>
-      <version>${tribestream-security.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.tomitribe.tribestream</groupId>
-      <artifactId>tribestream-security-signatures-api</artifactId>
-      <version>${tribestream-security.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.tomitribe.tribestream</groupId>
-      <artifactId>tribestream-security-signatures-core</artifactId>
-      <version>${tribestream-security.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.tomitribe.tribestream</groupId>
-      <artifactId>tribestream-security-digest-api</artifactId>
-      <version>${tribestream-security.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.tomitribe.tribestream</groupId>
-      <artifactId>tribestream-security-digest-core</artifactId>
-      <version>${tribestream-security.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.tomitribe.tribestream</groupId>
-      <artifactId>tribestream-security-date</artifactId>
-      <version>${tribestream-security.version}</version>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.tomitribe.tools</groupId>
-      <artifactId>service-documentation-api</artifactId>
-      <version>${tribestream-documentation.version}</version>
       <scope>provided</scope>
     </dependency>
 
@@ -109,7 +65,7 @@
     <dependency>
       <groupId>com.tomitribe.tribestream</groupId>
       <artifactId>tribestream</artifactId>
-      <version>0.61-SNAPSHOT</version>
+      <version>0.61</version>
       <scope>provided</scope>
       <type>zip</type>
     </dependency>

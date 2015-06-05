@@ -37,14 +37,8 @@
     </dependency>
     <dependency>
       <groupId>com.tomitribe.tribestream</groupId>
-      <artifactId>tribestream-wadlx-api</artifactId>
-      <version>0.53</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.tomitribe.tribestream</groupId>
-      <artifactId>tribestream-governance-api</artifactId>
-      <version>0.52</version>
+      <artifactId>tribestream-api</artifactId>
+      <version>0.61</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -69,7 +63,7 @@
     <dependency>
       <groupId>com.tomitribe.tribestream</groupId>
       <artifactId>tribestream</artifactId>
-      <version>0.61-SNAPSHOT</version>
+      <version>0.61</version>
       <scope>provided</scope>
       <type>zip</type>
     </dependency>
