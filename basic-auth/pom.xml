@@ -172,7 +172,7 @@
     <repository>
       <id>tomitribe.releases.https</id>
       <name>Tomitribe Release Distribution Repository</name>
-      <url>http://repository.tomitribe.com/content/repositories/releases-tomitribe</url>
+      <url>http://repository.tomitribe.com/service/local/staging/deploy/maven2</url>
     </repository>
     <snapshotRepository>
       <id>tomitribe.snapshots.https</id>

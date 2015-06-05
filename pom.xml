@@ -83,4 +83,17 @@
       <url>http://repository.tomitribe.com/content/groups/tomitribe/</url>
     </repository>
   </repositories>
+
+  <distributionManagement>
+    <repository>
+      <id>tomitribe.releases.https</id>
+      <name>Tomitribe Release Distribution Repository</name>
+      <url>http://repository.tomitribe.com/service/local/staging/deploy/maven2</url>
+    </repository>
+    <snapshotRepository>
+      <id>tomitribe.snapshots.https</id>
+      <name>Tomitribe Development Snapshot Repository</name>
+      <url>http://repository.tomitribe.com/content/repositories/snapshots-tomitribe</url>
+    </snapshotRepository>
+  </distributionManagement>
 </project>
