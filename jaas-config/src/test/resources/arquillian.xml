@@ -19,7 +19,7 @@
     <configuration>
       <property name="groupId">com.tomitribe.tribestream</property>
       <property name="artifactId">tribestream</property>
-      <property name="version">0.61</property>
+      <property name="version">0.61.1</property>
       <property name="classifier"/>
       <property name="removeUnusedWebapps">true</property>
       <property name="httpsPort">-1</property>
