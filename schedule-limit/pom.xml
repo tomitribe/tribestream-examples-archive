@@ -20,7 +20,7 @@
 
   <groupId>com.tomitribe.tribestream.examples</groupId>
   <artifactId>schedule-limit</artifactId>
-  <version>0.61.3-SNAPSHOT</version>
+  <version>0.62.1-SNAPSHOT</version>
   <name>Tribestream Examples :: @Schedule Limit</name>
   <properties>
     <tribestream-security.version>0.56</tribestream-security.version>
@@ -38,7 +38,7 @@
     <dependency>
       <groupId>com.tomitribe.tribestream</groupId>
       <artifactId>tribestream-api</artifactId>
-      <version>0.61.2</version>
+      <version>0.62.1</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -63,7 +63,7 @@
     <dependency>
       <groupId>com.tomitribe.tribestream</groupId>
       <artifactId>tribestream</artifactId>
-      <version>0.61.2</version>
+      <version>0.62.1</version>
       <scope>provided</scope>
       <type>zip</type>
     </dependency>
