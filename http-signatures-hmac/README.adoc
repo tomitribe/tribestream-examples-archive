@@ -8,52 +8,67 @@ This simple example demonstrates how to sign a simple request to a REST endpoint
 
 == Configuring the server
 
-First, the server needs to be configured with a key. This can be set up using Java Keystore commands, but for the
-purposes of this example, this is done within the test using the +KeystoreInitializer+ class which is a +Singleton+
-that is started automatically with a +PostConstruct+ method that actually creates the keystore. This class creates
-the keystore in +${catalina_base}/conf/test.jks+.
+=== HTTP Signature Realm
 
-[source,java,numbered]
-----
-    @Singleton
-    @Startup
-    public class KeystoreInitializer {
-
-        public static final String SECRET = "this is supposed to be the shared secret between client and server. " +
-                "Not supposed to be in a constant.";
-
-        public static final String KEY_ALIAS = "support";
-        private static final String PWD = "this is sensible ;-)";
-        public static final String ALGO = "HmacSHA256";
-        private static File KS;
-
-        @PostConstruct
-        public void init() throws Exception {
-            // init and generate a key
-            final File conf = SystemInstance.get().getBase().getDirectory("conf");
-            KS = new File(conf, "test.jks");
-            StoreManager.get(KS.getAbsolutePath(), PWD.toCharArray(), true);
-            StoreManager.get(KS.getAbsolutePath(), PWD.toCharArray()).addSecretKey(KEY_ALIAS, PWD.toCharArray(), new SecretKeySpec(SECRET.getBytes(), ALGO));
-        }
-    }
-----
-
-The signatures realm also needs to be added to +server.xml+. Note the reference to the keystore created by the
-+@PostConstruct+ method above, and the password encrypted using Tribestream's 3DES routine.
-=
+The default Tribestream distribution already ships with a few convenience configuration to simplify HTTP signatures. The
+required authentication signature Realm is already set up in the file +${catalina_base}/conf/server.xml+. For reference,
+this is required XML fragment:
 
 [source,xml,numbered]
 ----
-        <Realm className="com.tomitribe.tribestream.security.signatures.SignatureJAASRealm"
-               appName="tribe-realm"
-               keystoreFile="${catalina.base}/conf/test.jks"
-               keystorePass="cipher:Static3DES:pVY3mYpz9x4jWCuFImuADWc+fRHFRIOm"
-               userClassNames="org.apache.openejb.core.security.jaas.UserPrincipal"
-               roleClassNames="org.apache.openejb.core.security.jaas.GroupPrincipal"/>
+<Realm className="com.tomitribe.tribestream.security.signatures.SignatureJAASRealm"
+       appName="tribe-realm"
+       keystoreFile="${catalina.base}/conf/test.jks"
+       keystorePass="cipher:Static3DES:pVY3mYpz9x4jWCuFImuADWc+fRHFRIOm"
+       userClassNames="org.apache.openejb.core.security.jaas.UserPrincipal"
+       roleClassNames="org.apache.openejb.core.security.jaas.GroupPrincipal"/>
+----
+
+Notice the elements +keystoreFile+ and +keystorePass+. These should be changed to use the proper keystore. If you don't
+have one, you can create a new keystore file. You need three things: a *shared secret* between the client and the
+server, a *key alias* to refer to the keystore entry that we are going to add, and finally a *password* to protect the
+integrity of the keystore entry and the keystore itself.
+
+On a command line, move to the +${catalina_base}/conf/+ folder and run the following:
+
+[source,bash]
+----
+echo -n 'shared_secret' | keytool -importpass -keystore test.jks -storetype jceks -alias app-alias -storepass changeit -keypass changeit -v
+----
+
+[NOTE]
+====
+You need the JDK 8 installed and added into the PATH to be able to tun the +keytool+ command.
+====
+
+Where:
+
+* *_shared_secret_* is the secret between the client and the server.
+* *_app-alias_* is the alias for the keystore entry.
+* *_changeit_* is the password for the keystore entry and the keystore file itself.
+
+Remember to change these values to suit your configuration. You may also want to change the keystore filename. Just
+change *_test.jks_* to another name. If you do so, you also need to change the +keystoreFile+ property in the
+*SignatureJAASRealm* XML fragment stored in the +${catalina_base}/conf/server.xml+ file.
+
+=== Permissions
+
+By default, the +alias+ provides the username, and is used to get the roles for the user from
++${catalina_base}/conf/tomcat-users.xml+. So, if the +alias+ is *_app_alias_* (as it is in this example), a user with
+the same name needs to exist in the +${catalina_base}/conf/tomcat-users.xml+ file with the appropriate roles set.
+For, example:
+
+[source,xml,numbered]
+----
+<tomcat-users>
+  <role rolename="user"/>
+  <user username="app-alias" password="null" roles="user"/>
+</tomcat-users>
 ----
 
 == Configuring the application
 
+=== Signature Authenticator ===
 Some configuration is also needed in the application. This will specify things like what class to use to resolve
 usernames (see the username-retriever example), whether to validate the date if used in the signature (see the
 date-header-freshness example), and what headers *must* be included in the signature as a *minimum*. This is done in the
@@ -61,12 +76,11 @@ application's +META-INF/context.xml+ file.
 
 [source,xml,numbered]
 ----
-    <Context PreemptiveAuthentication="true">
-      <Valve className="com.tomitribe.tribestream.security.signatures.SignatureAuthenticator"
-             algorithm="hmac-sha256" debug="true"
-             headers="(request-target)"
-          />
-    </Context>
+<Context PreemptiveAuthentication="true">
+  <Valve className="com.tomitribe.tribestream.security.signatures.SignatureAuthenticator"
+         algorithm="hmac-sha256" debug="true"
+         headers="(request-target)"/>
+</Context>
 ----
 
 Notice here that the only item required is the URI and HTTP method for the request, but this can include other things
@@ -74,27 +88,49 @@ such as the date (which is a good way of limiting the length of time this signat
 the request, or any other headers that might be included in the request. The +debug+ option provides additional headers
 on the response which can be useful for debugging - you can compare the signing string created by the server, for example.
 
-== Permissions
-
-By default, the +key-id+ provides the username, and is used to get the roles for the user from +tomcat-users.xml+. So,
-if the +key-id+ is +support+ (as it is in this example), a support user nees to exist in the +tomcat-users.xml+ file
-with the appropriate roles set. For, example:
+=== Login Config Auth Method ===
+You also need to set up the application +WEB-INF/web.xml+ with the proper security constraints, plus the required
+authentication method. Here is a sample file:
 
 [source,xml,numbered]
 ----
-    <tomcat-users>
-      <role rolename="exploitation"/>
-      <user username="support" password="ignored-while-login-with-signatures-only" roles="exploitation"/>
-    </tomcat-users>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+         version="3.0">
+
+
+  <security-constraint>
+    <web-resource-collection>
+      <web-resource-name>REST API Resources</web-resource-name>
+      <url-pattern>/api/*</url-pattern>
+    </web-resource-collection>
+    <auth-constraint>
+      <role-name>*</role-name>
+    </auth-constraint>
+    <user-data-constraint>
+      <transport-guarantee>NONE</transport-guarantee>
+    </user-data-constraint>
+  </security-constraint>
+
+  <login-config>
+    <auth-method>SIGNATURE</auth-method>
+  </login-config>
+  <security-role>
+    <role-name>*</role-name>
+  </security-role>
+
+</web-app>
 ----
 
-== Adding the header
+== Clients ==
+
+=== Adding the header
 
 In Java, creating the signature can be done using the +com.tomitribe.tribestream.security.signatures.Signer+ class:
 
 [source,java,numbered]
 ----
-    final Signature signature = new Signature("support", "hmac-sha256", null, "(request-target)");
+    final Signature signature = new Signature("<<alias>>", "hmac-sha256", null, "(request-target)");
 
     final Key key = new SecretKeySpec("<<shared secret>>".getBytes(), "HmacSHA256");
     final Signer signer = new Signer(key, signature);
@@ -102,7 +138,8 @@ In Java, creating the signature can be done using the +com.tomitribe.tribestream
     final String signature =  signer.sign(method, uri, headers);
 ----
 
-The signature can be added to the +Authorization+ header in the test as shown below.
+The signature can be added to the +Authorization+ header in the test as shown below. Note that the values uses to sign
+the request are the same in the example command to create the keytool. Change the values as needed.
 
 [source,java,numbered]
 ----
@@ -119,9 +156,9 @@ The signature can be added to the +Authorization+ header in the test as shown be
     }
 
     private Signature sign(final String method, final String uri) throws Exception {
-        final Signature signature = new Signature(KeystoreInitializer.KEY_ALIAS, "hmac-sha256", null, "(request-target)");
+        final Signature signature = new Signature("app-alias", "hmac-sha256", null, "(request-target)");
 
-        final Key key = new SecretKeySpec(KeystoreInitializer.SECRET.getBytes(), KeystoreInitializer.ALGO);
+        final Key key = new SecretKeySpec("shared_secret".getBytes(), "HmacSHA256");
         final Signer signer = new Signer(key, signature);
         final Map<String, String> headers = new HashMap<>();
         return signer.sign(method, uri, headers);

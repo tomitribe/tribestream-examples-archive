@@ -57,7 +57,7 @@ public class Colors {
 
     @GET
     @Path("authorized")
-    @RolesAllowed("exploitation")
+    @RolesAllowed("user")
     public String onlyIfAllowed() {
         return "you rock guys";
     }

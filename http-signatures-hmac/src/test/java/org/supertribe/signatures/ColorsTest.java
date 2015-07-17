@@ -52,8 +52,7 @@ public class ColorsTest {
     public static WebArchive war() throws Exception {
         return new Mvn.Builder()
                 .name("colors.war")
-                .build(WebArchive.class)
-                .addClass(KeystoreInitializer.class);
+                .build(WebArchive.class);
     }
 
     /**
@@ -152,9 +151,9 @@ public class ColorsTest {
      * @throws Exception
      */
     private Signature sign(final String method, final String uri) throws Exception {
-        final Signature signature = new Signature(KeystoreInitializer.KEY_ALIAS, "hmac-sha256", null, "(request-target)");
+        final Signature signature = new Signature("app-alias", "hmac-sha256", null, "(request-target)");
 
-        final Key key = new SecretKeySpec(KeystoreInitializer.SECRET.getBytes(), KeystoreInitializer.ALGO);
+        final Key key = new SecretKeySpec("shared_secret".getBytes(), "HmacSHA256");
         final Signer signer = new Signer(key, signature);
         final Map<String, String> headers = new HashMap<>();
         return signer.sign(method, uri, headers);
