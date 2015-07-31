@@ -52,8 +52,6 @@ itests/itests-repogistry/log.txt
 
 *.rsa
 
-*.jks
-
 *.p12
 
 deps/tribestream-apis/dependency-reduced-pom.xml

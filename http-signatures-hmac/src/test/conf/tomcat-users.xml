@@ -16,7 +16,7 @@
   ~ limitations under the License.
   -->
 <tomcat-users>
-  <role rolename="exploitation"/>
-  <user username="support" password="ignored-while-login-with-signatures-only" roles="exploitation"/>
+  <role rolename="user"/>
+  <user username="app-alias" password="null" roles="user"/>
 </tomcat-users>
 

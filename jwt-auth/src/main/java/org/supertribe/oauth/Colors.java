@@ -14,9 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.supertribe.signatures;
+package org.supertribe.oauth;
 
-import javax.annotation.security.RolesAllowed;
 import javax.ejb.Lock;
 import javax.ejb.LockType;
 import javax.ejb.Singleton;
@@ -48,17 +47,4 @@ public class Colors {
         return c;
     }
 
-    @GET
-    @Path("refused")
-    @RolesAllowed("not usable role")
-    public String refused() {
-        throw new IllegalStateException("Should never reach this exception");
-    }
-
-    @GET
-    @Path("authorized")
-    @RolesAllowed("user")
-    public String onlyIfAllowed() {
-        return "you rock guys";
-    }
 }

@@ -19,12 +19,10 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.tomitribe.tribestream.examples</groupId>
-  <artifactId>http-signatures-username-retriever</artifactId>
+  <artifactId>jwt-auth</artifactId>
   <version>0.64-SNAPSHOT</version>
-  <name>Tribestream Examples :: HTTP Signatures Username Retriever</name>
-  <properties>
-    <tribestream-security.version>0.64</tribestream-security.version>
-  </properties>
+  <name>Tribestream Examples :: JWT Auth</name>
+
   <packaging>war</packaging>
 
   <dependencies>
@@ -34,12 +32,7 @@
       <version>6.0-6</version>
       <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>com.tomitribe.tribestream</groupId>
-      <artifactId>tribestream-container</artifactId>
-      <version>${tribestream-security.version}</version>
-      <scope>provided</scope>
-    </dependency>
+
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
@@ -136,6 +129,19 @@
       <version>2.6.16</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.tomitribe.tribestream</groupId>
+      <artifactId>tribestream-container</artifactId>
+      <version>0.64</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.nimbusds</groupId>
+      <artifactId>nimbus-jose-jwt</artifactId>
+      <version>3.9.2</version>
+      <scope>test</scope>
+    </dependency>
+
 
   </dependencies>
 
@@ -144,6 +150,20 @@
       <testResource>
         <directory>src/test/resources</directory>
         <filtering>true</filtering>
+        <excludes>
+          <exclude>**/*.cert</exclude>
+          <exclude>**/*.der</exclude>
+          <exclude>**/*.pem</exclude>
+        </excludes>
+      </testResource>
+      <testResource>
+        <directory>src/test/resources</directory>
+        <filtering>false</filtering>
+        <includes>
+          <include>**/*.cert</include>
+          <include>**/*.der</include>
+          <include>**/*.pem</include>
+        </includes>
       </testResource>
     </testResources>
     <plugins>
