@@ -18,6 +18,5 @@
 <Context PreemptiveAuthentication="true">
   <Valve className="com.tomitribe.tribestream.security.signatures.SignatureAuthenticator"
          algorithm="hmac-sha256" debug="true"
-         headers="(request-target)"
-      />
+         headers="(request-target)"/>
 </Context>

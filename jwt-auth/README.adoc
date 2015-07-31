@@ -1,0 +1,61 @@
+= JWT Verfication
+
+Tribestream provides a simple valve that can be used by applications to verify JWT tokens that are passed to them either via the Authorization header, or via another HTTP header.
+
+== Configuring the server
+
+The server needs to have the public certificate for the TAG that issued the JWT in its keystore. The relevant entry in the keystore can be specified by using the following system properties:
+
+----
+        tribe.oauth2.jws.public-key = tag
+        tribe.oauth2.jws.keystore.filename = conf/tag.jks
+        tribe.oauth2.jws.keystore.password = this is sensible ;-)
+----
+
+=== tribe.oauth2.jws.public-key
+
+This property specifies the public certificate from the keystore to use to check the JWS signature.
+
+=== tribe.oauth2.jws.keystore.filename
+
+This is the location of the keystore, relative to the Tribestream base directory.
+
+=== tribe.oauth2.jws.keystore.password
+
+The password to used to access both the key store and the key entry.
+
+In addition, Tribestream needs to now the issuer of the JWT and the HTTP header that contains the JWT (and any prefix that header may have, such a bearer).
+
+----
+        tribe.oauth2.jwt.issuer = https://soa.tomitribe.com/soa-iag/oauth
+        tribe.oauth2.auth.header = gws-tag-jwt-access-token
+        tribe.oauth2.auth.prefix =
+----
+
+=== tribe.oauth2.jwt.issuer
+
+This identifies the system that issues the JWT. This much match the value on the TAG server
+
+=== tribe.oauth2.auth.header
+
+Identifies the HTTP header that has the JWT to verify.
+
+=== tribe.oauth2.jwt.prefix
+
+Specifies the prefix that the HTTP header has before the JWT token, if any. Usually this will be blank if using a custom header, or "Bearer" if using the Authorization header.
+
+== Configuring the application
+
+Add a +META-INF/context.xml+ file to the application and include the following valve:
+
+[source,xml,numbered]
+----
+	<Context preemptiveAuthentication="true">
+      <!--
+      The order is very important here. The security must always be the first one.
+      Then, the rewrite feature if necessary and finally the Proxy one, which is always the latest one.
+      -->
+      <Valve className="com.tomitribe.tribestream.proxy.auth.TokenValve"/>
+    </Context>
+----
+
