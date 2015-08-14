@@ -34,13 +34,6 @@
       <property name="conf">src/test/conf</property>
       <property name="properties">
         openejb.deploymentId.format={appId}/{ejbJarId}/{ejbName}
-
-        tribe.oauth2.jws.public-key = tag
-        tribe.oauth2.jws.keystore.filename = conf/tag.jks
-        tribe.oauth2.jws.keystore.password = this is sensible ;-)
-        tribe.oauth2.jwt.issuer = https://soa.tomitribe.com/soa-iag/oauth
-        tribe.oauth2.auth.header = gws-tag-jwt-access-token
-        tribe.oauth2.auth.prefix =
       </property>
     </configuration>
   </container>
