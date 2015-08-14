@@ -20,11 +20,11 @@
 
   <groupId>com.tomitribe.tribestream.examples</groupId>
   <artifactId>http-signatures-hmac</artifactId>
-  <version>0.65.2-SNAPSHOT</version>
+  <version>0.66-SNAPSHOT</version>
   <name>Tribestream Examples :: HTTP Signatures HMAC</name>
 
   <properties>
-    <tribestream-security.version>0.65.1</tribestream-security.version>
+    <tribestream-security.version>0.66</tribestream-security.version>
   </properties>
   <packaging>war</packaging>
 
@@ -65,7 +65,7 @@
     <dependency>
       <groupId>com.tomitribe.tribestream</groupId>
       <artifactId>tribestream</artifactId>
-      <version>0.65.1</version>
+      <version>0.66</version>
       <scope>provided</scope>
       <type>zip</type>
     </dependency>
