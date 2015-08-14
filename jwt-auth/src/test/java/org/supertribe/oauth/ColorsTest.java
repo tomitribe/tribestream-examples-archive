@@ -58,35 +58,33 @@ public class ColorsTest {
 
     @Test
     public void success() throws Exception {
+        {
+            final String actual = WebClient.create(webapp.toExternalForm())
+                    .path("api/colors")
+                    .path("preferred")
+                    .header("gws-tag-jwt-access-token", JWTUtil.createValidJwtAccessToken())
+                    .put("World", String.class);
 
-        final String actual = WebClient.create(webapp.toExternalForm())
-                .path("api/colors")
-                .path("preferred")
-                .header("gws-tag-jwt-access-token", JWTUtil.createValidJwtAccessToken())
-                .get(String.class);
+            assertEquals("World", actual);
+        }
+        {
+            final String actual = WebClient.create(webapp.toExternalForm())
+                    .path("api/colors")
+                    .path("preferred")
+                    .header("gws-tag-jwt-access-token", JWTUtil.createValidJwtAccessToken())
+                    .get(String.class);
 
-        assertEquals("orange", actual);
-    }
+            assertEquals("orange", actual);
+        }
+        {
+            final String actual = WebClient.create(webapp.toExternalForm())
+                    .path("api/colors")
+                    .path("preferred")
+                    .header("gws-tag-jwt-access-token", JWTUtil.createValidJwtAccessToken())
+                    .post("Hello", String.class);
 
-    @Test
-    public void successPost() throws Exception {
-        final String actual = WebClient.create(webapp.toExternalForm())
-                .path("api/colors")
-                .path("preferred")
-                .header("gws-tag-jwt-access-token", JWTUtil.createValidJwtAccessToken())
-                .post("Hello", String.class);
+            assertEquals("Hello", actual);
+        }
 
-        assertEquals("Hello", actual);
-    }
-
-    @Test
-    public void successPut() throws Exception {
-        final String actual = WebClient.create(webapp.toExternalForm())
-                .path("api/colors")
-                .path("preferred")
-                .header("gws-tag-jwt-access-token", JWTUtil.createValidJwtAccessToken())
-                .put("World", String.class);
-
-        assertEquals("World", actual);
     }
 }
