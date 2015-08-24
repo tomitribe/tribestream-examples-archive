@@ -24,7 +24,7 @@
   <name>Tribestream Examples :: Date Header Freshness</name>
 
   <properties>
-    <tribestream-security.version>0.66</tribestream-security.version>
+    <tribestream-security.version>0.67</tribestream-security.version>
   </properties>
   <packaging>war</packaging>
 
@@ -65,7 +65,7 @@
     <dependency>
       <groupId>com.tomitribe.tribestream</groupId>
       <artifactId>tribestream</artifactId>
-      <version>0.66</version>
+      <version>0.67</version>
       <scope>provided</scope>
       <type>zip</type>
     </dependency>
