@@ -23,7 +23,7 @@
   <version>0.68-SNAPSHOT</version>
   <name>Tribestream Examples :: JAAS Config</name>
   <properties>
-    <tribestream-security.version>0.67</tribestream-security.version>
+    <tribestream-security.version>0.68</tribestream-security.version>
   </properties>
   <packaging>war</packaging>
 
@@ -56,7 +56,7 @@
     <dependency>
       <groupId>com.tomitribe.tribestream</groupId>
       <artifactId>tribestream</artifactId>
-      <version>0.67</version>
+      <version>0.68</version>
       <scope>provided</scope>
       <type>zip</type>
     </dependency>
