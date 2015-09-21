@@ -20,11 +20,11 @@
 
   <groupId>com.tomitribe.tribestream.examples</groupId>
   <artifactId>digest-enforcer</artifactId>
-  <version>0.69-SNAPSHOT</version>
+  <version>0.70-SNAPSHOT</version>
   <name>Tribestream Examples :: Digest Enforcer</name>
 
   <properties>
-    <tribestream-security.version>0.69</tribestream-security.version>
+    <tribestream-security.version>0.70</tribestream-security.version>
   </properties>
   <packaging>war</packaging>
 
@@ -63,7 +63,7 @@
     <dependency>
       <groupId>com.tomitribe.tribestream</groupId>
       <artifactId>tribestream</artifactId>
-      <version>0.69</version>
+      <version>0.70</version>
       <scope>provided</scope>
       <type>zip</type>
     </dependency>
