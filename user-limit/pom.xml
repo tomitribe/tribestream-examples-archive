@@ -39,7 +39,7 @@
     <dependency>
       <groupId>com.tomitribe.tribestream</groupId>
       <artifactId>tribestream-api</artifactId>
-      <version>0.73</version>
+      <version>0.74</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -64,7 +64,7 @@
     <dependency>
       <groupId>com.tomitribe.tribestream</groupId>
       <artifactId>tribestream</artifactId>
-      <version>0.73</version>
+      <version>0.74</version>
       <scope>provided</scope>
       <type>zip</type>
     </dependency>
