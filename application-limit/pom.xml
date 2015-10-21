@@ -20,7 +20,7 @@
 
   <groupId>com.tomitribe.tribestream.examples</groupId>
   <artifactId>application-limit</artifactId>
-  <version>0.71-SNAPSHOT</version>
+  <version>0.71</version>
   <name>Tribestream Examples :: Application Limit</name>
   <properties>
     <tribestream-security.version>0.56</tribestream-security.version>
