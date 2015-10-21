@@ -122,7 +122,7 @@
                appName="tribe-realm"
                keystoreFile="${catalina.base}/conf/tag.jks"
                keystorePass="cipher:Static3DES:pVY3mYpz9x4jWCuFImuADWc+fRHFRIOm"
-               alias="tag"
+               keyAlias="tag"
                issuer="https://soa.tomitribe.com/soa-iag/oauth"
                userClassNames="org.apache.openejb.core.security.jaas.UserPrincipal"
                roleClassNames="org.apache.openejb.core.security.jaas.GroupPrincipal" />
