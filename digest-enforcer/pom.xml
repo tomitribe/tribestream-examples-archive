@@ -24,7 +24,7 @@
   <name>Tribestream Examples :: Digest Enforcer</name>
 
   <properties>
-    <tribestream-security.version>0.77</tribestream-security.version>
+    <tribestream-security.version>0.78</tribestream-security.version>
   </properties>
   <packaging>war</packaging>
 
@@ -63,7 +63,7 @@
     <dependency>
       <groupId>com.tomitribe.tribestream</groupId>
       <artifactId>tribestream</artifactId>
-      <version>0.77</version>
+      <version>0.78</version>
       <scope>provided</scope>
       <type>zip</type>
     </dependency>
