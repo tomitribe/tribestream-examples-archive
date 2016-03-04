@@ -20,7 +20,7 @@
 
   <groupId>com.tomitribe.tribestream.examples</groupId>
   <artifactId>jwt-auth</artifactId>
-  <version>0.77-SNAPSHOT</version>
+  <version>0.77</version>
   <name>Tribestream Examples :: JWT Auth</name>
 
   <packaging>war</packaging>
