@@ -20,7 +20,7 @@
 
   <groupId>com.tomitribe.tribestream.examples</groupId>
   <artifactId>http-signatures-username-retriever</artifactId>
-  <version>0.78-SNAPSHOT</version>
+  <version>0.78</version>
   <name>Tribestream Examples :: HTTP Signatures Username Retriever</name>
   <properties>
     <tribestream-security.version>0.78</tribestream-security.version>
