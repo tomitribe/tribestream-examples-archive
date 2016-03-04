@@ -20,7 +20,7 @@
 
   <groupId>com.tomitribe.tribestream.examples</groupId>
   <artifactId>jwt-auth</artifactId>
-  <version>0.80-SNAPSHOT</version>
+  <version>0.80.M1-SNAPSHOT</version>
   <name>Tribestream Examples :: JWT Auth</name>
 
   <packaging>war</packaging>
@@ -55,7 +55,7 @@
     <dependency>
       <groupId>com.tomitribe.tribestream</groupId>
       <artifactId>tribestream</artifactId>
-      <version>0.79</version>
+      <version>0.80.M1</version>
       <scope>provided</scope>
       <type>zip</type>
     </dependency>
@@ -132,7 +132,7 @@
     <dependency>
       <groupId>com.tomitribe.tribestream</groupId>
       <artifactId>tribestream-container</artifactId>
-      <version>0.79</version>
+      <version>0.80.M1</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
