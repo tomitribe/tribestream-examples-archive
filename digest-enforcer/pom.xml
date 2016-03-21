@@ -20,7 +20,7 @@
 
   <groupId>com.tomitribe.tribestream.examples</groupId>
   <artifactId>digest-enforcer</artifactId>
-  <version>0.80-SNAPSHOT</version>
+  <version>0.81-SNAPSHOT</version>
   <name>Tribestream Examples :: Digest Enforcer</name>
 
   <properties>
