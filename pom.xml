@@ -48,7 +48,8 @@
     <module>schedule-limit</module>
     <module>digest-enforcer</module>
     <module>jaas-config</module>
-  </modules>
+    <module>claims-data</module> 
+ </modules>
 
   <build>
     <plugins>

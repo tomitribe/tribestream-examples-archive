@@ -16,19 +16,25 @@
  */
 package org.supertribe.basicauth;
 
+import com.tomitribe.tribestream.examples.Claim;
+import com.tomitribe.tribestream.examples.Payload;
+
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Lock;
 import javax.ejb.LockType;
 import javax.ejb.Singleton;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
+import javax.inject.Inject;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import java.util.HashMap;
 
 @Path("colors")
 @Singleton
 @Lock(LockType.READ)
 public class Colors {
+
+    @Inject
+    public ClaimSinglenton claimSinglenton;
 
     @GET
     @Path("preferred")
@@ -61,4 +67,22 @@ public class Colors {
     public String onlyIfAllowed() {
         return "you rock guys";
     }
+
+    @Path("claim")
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Claim getClaim(Payload payload){
+        HashMap<String,Claim> chm =claimSinglenton.getClaimsHashMap();
+        return chm.get(payload.getUsername());
+    }
+
+    @Path("claim")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Claim getClaim(){
+        HashMap<String,Claim> chm =claimSinglenton.getClaimsHashMap();
+        return chm.get("Veronica");
+    }
+
 }
