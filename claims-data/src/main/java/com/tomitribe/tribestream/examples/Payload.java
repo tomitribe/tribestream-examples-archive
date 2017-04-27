@@ -1,14 +1,8 @@
 package com.tomitribe.tribestream.examples;
 
-
-
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlRootElement;
-
-
-@XmlRootElement(name="payload")
-@XmlAccessorType(XmlAccessType.FIELD)
+/**
+ * Payload object used to receive user claim request on rest endpoints.
+ */
 public class Payload {
 
     String claim_source_id;
@@ -18,17 +12,6 @@ public class Payload {
 
     public Payload() {
     }
-
-//    public Payload(String username) {
-//        this.username = username;
-//    }
-//
-//    public Payload(String claim_source_id, String grant_type, String client_id, String username) {
-//        this.claim_source_id = claim_source_id;
-//        this.grant_type = grant_type;
-//        this.client_id = client_id;
-//        this.username = username;
-//    }
 
     public String getClaim_source_id() {
         return claim_source_id;

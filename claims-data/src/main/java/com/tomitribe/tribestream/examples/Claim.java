@@ -2,6 +2,9 @@ package com.tomitribe.tribestream.examples;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
+/**
+ * POJO for Claim.
+ */
 @XmlRootElement
 public class Claim {
     String name;

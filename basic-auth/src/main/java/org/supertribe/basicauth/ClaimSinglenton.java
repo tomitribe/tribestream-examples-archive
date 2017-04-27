@@ -5,6 +5,9 @@ import com.tomitribe.tribestream.examples.ClaimsLoad;
 import javax.ejb.Singleton;
 import java.util.HashMap;
 
+/**
+ * Singleton bean used for loading the hashmap of claims used by the Colors endpoint.
+ */
 @Singleton
 public class ClaimSinglenton {
 

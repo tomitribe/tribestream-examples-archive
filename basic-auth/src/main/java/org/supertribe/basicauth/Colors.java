@@ -69,6 +69,12 @@ public class Colors {
         return "you rock guys";
     }
 
+
+    /**
+     * Method to provide valid and invalid claims based on usernames provided in the post body.
+     * @param payload containing user to be find it.
+     * @return json map containing user claim.
+     */
     @Path("claim")
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
@@ -89,19 +95,10 @@ public class Colors {
             case "PRICE":     return Response.status(200).entity("notAJsonMap").build();
         }
 
-
         //return Response.ok(chm.get(payload.getUsername())).build();
         Claim claimObj = chm.get(payload.getUsername().toUpperCase());
         return Response.status(200).entity("{\"displayName\":\""+claimObj.getName()+"\",\"mail\":\""+claimObj.getEmail()+"\"}").build();
 
-    }
-
-    @Path("claim")
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Claim getClaim(){
-        HashMap<String,Claim> chm =claimSinglenton.getClaimsHashMap();
-        return chm.get("Veronica");
     }
 
 }
