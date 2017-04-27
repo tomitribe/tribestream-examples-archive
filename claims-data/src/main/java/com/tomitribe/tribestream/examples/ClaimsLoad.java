@@ -26,7 +26,7 @@ public class ClaimsLoad {
 
                 // use comma as separator
                 String[] claimLine = line.split(cvsSplitBy);
-                claimsHashMap.put(claimLine[0], new Claim(claimLine[0],claimLine[1]));
+                claimsHashMap.put(claimLine[0].toUpperCase(), new Claim(claimLine[0],claimLine[1]));
 
                 //System.out.println("name " + claimLine[0] + " email" + claimLine[1] + "]");
             }
