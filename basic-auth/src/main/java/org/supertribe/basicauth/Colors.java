@@ -35,7 +35,7 @@ import java.util.HashMap;
 public class Colors {
 
     @Inject
-    public ClaimSinglenton claimSinglenton;
+    public ClaimStore claimStore;
 
     @GET
     @Path("preferred")
@@ -80,7 +80,7 @@ public class Colors {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML })
     public Response getClaim(Payload payload){
-        HashMap<String,Claim> chm =claimSinglenton.getClaimsHashMap();
+        HashMap<String,Claim> chm = claimStore.getClaimsHashMap();
 
         //Managed responses based on usernames:
         switch (payload.getUsername().toUpperCase()){

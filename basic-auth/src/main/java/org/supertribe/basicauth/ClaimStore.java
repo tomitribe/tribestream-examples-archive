@@ -9,11 +9,11 @@ import java.util.HashMap;
  * Singleton bean used for loading the hashmap of claims used by the Colors endpoint.
  */
 @Singleton
-public class ClaimSinglenton {
+public class ClaimStore {
 
     HashMap<String,Claim> claimsHashMap;
 
-    public ClaimSinglenton() {
+    public ClaimStore() {
         ClaimsLoad  cl = new ClaimsLoad();
         claimsHashMap = cl.getClaims();
     }
