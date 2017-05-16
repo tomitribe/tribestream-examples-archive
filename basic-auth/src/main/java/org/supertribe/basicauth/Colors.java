@@ -16,19 +16,26 @@
  */
 package org.supertribe.basicauth;
 
+import com.tomitribe.tribestream.examples.Claim;
+import com.tomitribe.tribestream.examples.Payload;
+
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Lock;
 import javax.ejb.LockType;
 import javax.ejb.Singleton;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
+import javax.inject.Inject;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.util.HashMap;
 
 @Path("colors")
 @Singleton
 @Lock(LockType.READ)
 public class Colors {
+
+    @Inject
+    public ClaimStore claimStore;
 
     @GET
     @Path("preferred")
@@ -61,4 +68,37 @@ public class Colors {
     public String onlyIfAllowed() {
         return "you rock guys";
     }
+
+
+    /**
+     * Method to provide valid and invalid claims based on usernames provided in the post body.
+     * @param payload containing user to be find it.
+     * @return json map containing user claim.
+     */
+    @Path("claim")
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML })
+    public Response getClaim(Payload payload){
+        HashMap<String,Claim> chm = claimStore.getClaimsHashMap();
+
+        //Managed responses based on usernames:
+        switch (payload.getUsername().toUpperCase()){
+            case "ALEXA":     return Response.status(500).entity("This is a managed 500 error.").build();
+            case "DOLAN":     return Response.status(400).entity("This is a managed 400 error.").build();
+            case "MACY":      return Response.status(300).entity("This is a managed 300 error.").build();
+            case "RUBY":      return Response.status(200).entity("This is a 200 xml media type managed response.").type(MediaType.APPLICATION_XML).build();
+            case "JAMES":     return Response.status(200).entity("This is a 200 html media type managed response.").type(MediaType.TEXT_HTML_TYPE).build();
+            case "NAIDA":     return Response.status(200).entity("{\"ACCOUNT_EXIST\": 1}").build();
+            case "JORDAN":    return Response.status(200).entity("{\"ACCOUNT_EXIST\": true}").build();
+            case "SEPTEMBER": return Response.status(200).entity("{\"ACCOUNT_EXIST\": \"yes\"}").build();
+            case "PRICE":     return Response.status(200).entity("notAJsonMap").build();
+        }
+
+        //return Response.ok(chm.get(payload.getUsername())).build();
+        Claim claimObj = chm.get(payload.getUsername().toUpperCase());
+        return Response.status(200).entity("{\"displayName\":\""+claimObj.getName()+"\",\"mail\":\""+claimObj.getEmail()+"\"}").build();
+
+    }
+
 }

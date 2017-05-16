@@ -37,6 +37,11 @@
     </dependency>
 
     <dependency>
+      <groupId>com.tomitribe.tribestream.examples</groupId>
+      <artifactId>claims-data</artifactId>
+      <version>0.81-SNAPSHOT</version>
+    </dependency>
+    <dependency>
       <groupId>com.tomitribe.tribestream</groupId>
       <artifactId>tribestream-container</artifactId>
       <version>${tribestream-security.version}</version>
