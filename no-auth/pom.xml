@@ -20,7 +20,7 @@
 
   <groupId>com.tomitribe.tribestream.examples</groupId>
   <artifactId>no-auth</artifactId>
-  <version>0.81</version>
+  <version>0.82-SNAPSHOT</version>
   <name>Tribestream Examples :: No Auth</name>
 
   <packaging>war</packaging>
@@ -37,7 +37,7 @@
     <dependency>
       <groupId>com.tomitribe.tribestream.examples</groupId>
       <artifactId>claims-data</artifactId>
-      <version>0.81</version>
+      <version>0.82-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
