@@ -3,7 +3,7 @@
 
   <groupId>com.tomitribe.tribestream.examples</groupId>
   <artifactId>claims-data</artifactId>
-  <version>0.82-SNAPSHOT</version>
+  <version>0.81</version>
   <packaging>jar</packaging>
 
   <name>claims-data</name>
