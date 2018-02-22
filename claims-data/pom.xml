@@ -4,7 +4,7 @@
 
   <groupId>com.tomitribe.tribestream.examples</groupId>
   <artifactId>claims-data</artifactId>
-  <version>0.81-SNAPSHOT</version>
+  <version>0.82-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>claims-data</name>
@@ -22,4 +22,26 @@
       <scope>provided</scope>
     </dependency>
   </dependencies>
+
+  <repositories>
+    <repository>
+      <id>tomitribe-all</id>
+      <name>Tomitribe Repository</name>
+      <url>https://repository.tomitribe.com/content/groups/tomitribe/</url>
+    </repository>
+  </repositories>
+
+  <distributionManagement>
+    <repository>
+      <id>tomitribe.releases.https</id>
+      <name>Tomitribe Release Distribution Repository</name>
+      <url>https://repository.tomitribe.com/service/local/staging/deploy/maven2</url>
+    </repository>
+    <snapshotRepository>
+      <id>tomitribe.snapshots.https</id>
+      <name>Tomitribe Development Snapshot Repository</name>
+      <url>https://repository.tomitribe.com/content/repositories/snapshots-tomitribe</url>
+    </snapshotRepository>
+  </distributionManagement>
+
 </project>
